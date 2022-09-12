@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">puppywar</string>
+    <string name="tv_name">どっちが可愛い？</string>
+    <string name="tv_win">win</string>
+    <string name="tv_lose">lose</string>
+    <string name="tv_next">next</string>
+    <string name="menu_list_options_ranking">ranking</string>
+    <string name="menu_list_options_camera">camera</string>
+    <string-array name="lv_ranking">
+        <item>一位</item>
+        <item>二位</item>
+        <item>三位</item>
+        <item>四位</item>
+    </string-array>
+    <string name="menu_list_options_HTTPtest">HTTP test</string>
+    <string name="tv_HTTPtesturl">url:https://quiet-shelf-97515.herokuapp.com/stores</string>
+    <string name="bt_post">post</string>
+    <string name="bt_get">get</string>
+    <string name="tv_HTTPresult">result</string>
+</resources>
