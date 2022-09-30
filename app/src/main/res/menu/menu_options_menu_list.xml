@@ -7,14 +7,14 @@
         app:showAsAction="never"
         android:title="@string/menu_list_options_ranking"/>
 
-    <item
-        android:id="@+id/menuListOptionCamera"
-        app:showAsAction="never"
-        android:title="@string/menu_list_options_camera"/>
+<!--    <item-->
+<!--        android:id="@+id/menuListOptionCamera"-->
+<!--        app:showAsAction="never"-->
+<!--        android:title="@string/menu_list_options_camera"/>-->
 
-    <item
-        android:id="@+id/menuListOptionHTTPtest"
-        app:showAsAction="never"
-        android:title="@string/menu_list_options_HTTPtest"/>
+<!--    <item-->
+<!--        android:id="@+id/menuListOptionHTTPtest"-->
+<!--        app:showAsAction="never"-->
+<!--        android:title="@string/menu_list_options_HTTPtest"/>-->
 
 </menu>

@@ -7,6 +7,8 @@ import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.os.HandlerCompat;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,6 +16,7 @@ import android.renderscript.ScriptGroup;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -25,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -53,7 +57,8 @@ public class HTTPtestActivity extends AppCompatActivity {
     }
 
     private class ButtonListener implements View.OnClickListener{
-        String urlFull = "https://quiet-shelf-97515.herokuapp.com/stores";
+        String urlFull = "http://flask-env-eb-3.eba-kndu7tft.ap-northeast-1.elasticbeanstalk.com/getjson/17";
+        String urlImage = "http://flask-env-eb-3.eba-kndu7tft.ap-northeast-1.elasticbeanstalk.com/static/images/あああ.jpg";
         @Override
         public void onClick(View view) {
             TextView response = findViewById(R.id.tvResponse);
@@ -61,10 +66,9 @@ public class HTTPtestActivity extends AppCompatActivity {
             switch (id) {
                 case R.id.btGet:
                     receiveHttp(urlFull,"GET");
-//                    response.setText("Get");
+                    receiveHttp(urlImage,"GETIMG");
                     break;
                 case R.id.btPost:
-//                    response.setText("Post");
                     receiveHttp(urlFull,"POST");
                     break;
                 case R.id.btClear:
@@ -97,11 +101,10 @@ public class HTTPtestActivity extends AppCompatActivity {
         @WorkerThread
         @Override
         public void run() {
-
             HttpURLConnection con = null;
             InputStream is = null;
             String result = "";
-
+            Bitmap bmp = null;
             try{
                 URL url = new URL(_urlFull);
                 con = (HttpURLConnection) url.openConnection();
@@ -113,21 +116,39 @@ public class HTTPtestActivity extends AppCompatActivity {
                     is = con.getInputStream();
                     result = is2String(is);
                 }
+                else if (_order == "GETIMG"){
+                    con.setRequestMethod("GET");
+                    con.connect();
+                    is = con.getInputStream();
+                    bmp = BitmapFactory.decodeStream(is);
+                }
                 else{
-                    String postData=
-                            "{"+
-                                    "name"+":"+ "test from android,"+
-                            "items:["+
-                    "{"+
-                        "name:item name,"+
-                            "price: 110"+
-                    "}" +"]"+ "};";
+//                    String postData="name=testfromandroid" ;
+                    String json="{\n" +
+                            "    \"name\": \"test from android2\",\n" +
+                            "    \"items\":[\n" +
+                            "        {\n" +
+                            "            \"name\":\"item name\",\n" +
+                            "            \"price\": 110\n" +
+                            "        }\n" +
+                            "    ]\n" +
+                            "}";
                     con.setRequestMethod("POST");
                     con.setDoOutput(true);
-                    OutputStream os = con.getOutputStream();
-                    os.write(postData.getBytes());
-                    os.flush();
-                    os.close();
+                    con.setDoInput(true);
+                    con.setRequestProperty("Content-Type","application/json; charset=utf-8");
+                    con.connect();
+                    PrintStream ps = new PrintStream(con.getOutputStream());
+                    ps.print(json);
+                    ps.close();
+                    if (con.getResponseCode() != 200) {
+                        Log.e(DEBUG_TAG,"con.getResponseCode() != 200");
+
+                    }
+//                    OutputStream os = con.getOutputStream();
+//                    os.write(postData.getBytes());
+//                    os.flush();
+//                    os.close();
                     con.disconnect();
                 }
             }
@@ -153,9 +174,14 @@ public class HTTPtestActivity extends AppCompatActivity {
                     }
                 }
             }
-
-            HttpPostExecutor postExecutor = new HttpPostExecutor(result);
-            _handler.post(postExecutor);
+            if(_order=="GET" || _order=="POST"){
+                HttpPostExecutor postExecutor = new HttpPostExecutor(result);
+                _handler.post(postExecutor);
+            }
+            else{
+                HTTPPOSTImgExecutor postImgExecutor = new HTTPPOSTImgExecutor(bmp);
+                _handler.post(postImgExecutor);
+            }
         }
     }
 
@@ -174,27 +200,43 @@ public class HTTPtestActivity extends AppCompatActivity {
             String category_name = "";
             String store_name = "";
             String item_name = "";
-            int price = 0;
+            int id=-1,win=-1,lose=-1;
+            String title="default_title";
             Log.e(DEBUG_TAG,"テスト＝＝＝＝＝＝＝＝");
             try{
                 JSONObject rootJSON = new JSONObject(_result);
-                JSONArray storesJSON = rootJSON.getJSONArray("stores");
-                store_name = storesJSON.getJSONObject(0).getString("name");
-                JSONArray itemJSON = storesJSON.getJSONObject(0).getJSONArray("items");
-                item_name = itemJSON.getJSONObject(0).getString("name");
-                price = itemJSON.getJSONObject(0).getInt("price");
-//                store_name = rootJSON.getString("name");
-//                JSONObject itemJSON = storesJSON.getJSONObject("items");
-//                item_name = itemJSON.getString("name");
-//                price = itemJSON.getInt("price");
+                id = rootJSON.getInt("id");
+                win = rootJSON.getInt("win");
+                lose = rootJSON.getInt("lose");
+                title = rootJSON.getString("title");
             }
             catch (JSONException ex){
                 Log.e(DEBUG_TAG,"JSON解析失敗",ex);
             }
             //tvをgetして書き換え
             TextView response = findViewById(R.id.tvResponse);
-            Integer i = Integer.valueOf(price);
-            response.setText("stores:"+store_name+","+"item_name:"+item_name+","+"price:"+i.toString());
+            response.setText("id:"+Integer.valueOf(id).toString()+","+"win:"+Integer.valueOf(win).toString()+"lose:"+Integer.valueOf(lose).toString()+"title:"+title);
+
+
+        }
+    }
+
+    private  class  HTTPPOSTImgExecutor implements  Runnable {
+        private Bitmap _bmp = null;
+
+        public HTTPPOSTImgExecutor(Bitmap bmp) {
+            _bmp = bmp;
+        }
+
+        @UiThread
+        @Override
+        public void run() {
+            //UIスレッドの記述
+//
+            Log.e(DEBUG_TAG, "テストIMG＝＝＝＝＝＝＝＝");
+            //tvをgetして書き換え
+            ImageView imageView = findViewById(R.id.ivGET);
+            imageView.setImageBitmap(_bmp);
         }
     }
 
